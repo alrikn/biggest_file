@@ -109,8 +109,8 @@ void basic_sorter(list_t *list)
     int size_temp;
     char *file_temp;
 
-    for (int i = 0; i < TOP_NUM; i++) {
-        for (int j = i+1; j < TOP_NUM; j++) {
+    for (int i = 0; i < list->file_taken; i++) {
+        for (int j = i+1; j < list->file_taken; j++) {
             if (list->sizes[i] > list->sizes[j]) {
                 size_temp = list->sizes[i];
                 file_temp = list->names[i];
@@ -123,29 +123,24 @@ void basic_sorter(list_t *list)
     }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     list_t list = {0};
-
     const char *start_dir = (argc > 1) ? argv[1] : ".";
 
     list.dir_list = realloc_char_array(NULL, start_dir);
     list.num_dirs = 1;
     list.file_taken = 0;
-
     main_loop(&list);
     basic_sorter(&list);
     printf("searched through %ld directories.\n", list.num_dirs);
     printf("Top files:\n");
-    for (int i = 0; i < list.file_taken; i++) {
+    for (int i = 0; i < list.file_taken; i++)
         printf("%ld bytes: %s\n", list.sizes[i], list.names[i]);
-    }
-
-    // Free memory
     for (int i = 0; i < list.num_dirs; i++)
         free(list.dir_list[i]);
     free(list.dir_list);
     for (int i = 0; i < list.file_taken; i++)
         free(list.names[i]);
-
     return 0;
 }
