@@ -6,14 +6,14 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#define TOP_NUM 100
+#define TOP_NUM 10
 
 typedef struct list {
     char **dir_list;      // dynamically growing array of directory names
     char *names[TOP_NUM];     // top 100 file names
-    long sizes[TOP_NUM];      // their corresponding sizes
-    long num_dirs;        // number of directories found
-    short file_taken;     // how many top files have been found
+    long long sizes[TOP_NUM];      // their corresponding sizes
+    long long num_dirs;        // number of directories found
+    int file_taken;     // how many top files have been found
 } list_t;
 
 char **realloc_char_array(char **array, const char *new_name)
@@ -38,7 +38,7 @@ char **realloc_char_array(char **array, const char *new_name)
     return new_array;
 }
 
-void find_big(list_t *list, const char *file_name, long size)
+void find_big(list_t *list, const char *file_name, long long size)
 {
     int index = 0;
     long smallest_found = list->sizes[0];
@@ -106,7 +106,7 @@ smallest at list->names[0]
 */
 void basic_sorter(list_t *list)
 {
-    int size_temp;
+    long long size_temp;
     char *file_temp;
 
     for (int i = 0; i < list->file_taken; i++) {
@@ -123,6 +123,13 @@ void basic_sorter(list_t *list)
     }
 }
 
+/*
+** TODO:    -L for level
+**          -d for dir (already implemented)
+**          -h for help
+**          -a for hidden (so we should ignore hidden until this flag is set)
+**          
+*/
 int main(int argc, char **argv)
 {
     list_t list = {0};
@@ -133,10 +140,10 @@ int main(int argc, char **argv)
     list.file_taken = 0;
     main_loop(&list);
     basic_sorter(&list);
-    printf("searched through %ld directories.\n", list.num_dirs);
+    printf("searched through %lld directories.\n", list.num_dirs);
     printf("Top files:\n");
     for (int i = 0; i < list.file_taken; i++)
-        printf("%ld bytes: %s\n", list.sizes[i], list.names[i]);
+        printf("%lld bytes: %s\n", list.sizes[i], list.names[i]);
     for (int i = 0; i < list.num_dirs; i++)
         free(list.dir_list[i]);
     free(list.dir_list);
