@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#define TOP_NUM 10
+#define TOP_NUM 100
 
 typedef struct list {
     char **dir_list;      // dynamically growing array of directory names
@@ -51,12 +51,11 @@ void find_big(list_t *list, const char *file_name, long long size)
         list->file_taken += 1;
         return;
     }
-    for (int i = 1; i < TOP_NUM; i++) {
+    for (int i = 1; i < TOP_NUM; i++)
         if (list->sizes[i] < smallest_found) {
             smallest_found = list->sizes[i];
             index = i;
         }
-    }
     if (smallest_found < size) {
         free(list->names[index]);
         list->names[index] = strdup(file_name);
@@ -68,14 +67,14 @@ void main_loop(list_t *list)
 {
     long current_dir_index = 0;
     struct stat st;
-    char full_path[4096];
+    char full_path[4097];
     struct dirent *entry;
     char *dir_name;
     DIR *dir;
 
     while (current_dir_index < list->num_dirs) {
         if (current_dir_index % 1000 == 0)
-            printf("searched through %ld directories\n", current_dir_index); //less system calls
+            printf("searched through %ld directories\n", current_dir_index);
         dir_name = list->dir_list[current_dir_index];
         dir = opendir(dir_name);
         if (!dir) {
@@ -83,7 +82,7 @@ void main_loop(list_t *list)
             continue;
         }
         while ((entry = readdir(dir)) != NULL) {
-            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            if ((entry->d_name[0] == '.') || strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
                 continue;
             snprintf(full_path, sizeof(full_path), "%s/%s", dir_name, entry->d_name);
             if (stat(full_path, &st) == 0) {
@@ -110,7 +109,7 @@ void basic_sorter(list_t *list)
     char *file_temp;
 
     for (int i = 0; i < list->file_taken; i++) {
-        for (int j = i+1; j < list->file_taken; j++) {
+        for (int j = i + 1; j < list->file_taken; j++) {
             if (list->sizes[i] > list->sizes[j]) {
                 size_temp = list->sizes[i];
                 file_temp = list->names[i];
