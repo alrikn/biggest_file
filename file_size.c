@@ -16,17 +16,12 @@ typedef struct list {
     int file_taken;     // how many top files have been found
 } list_t;
 
-char **realloc_char_array(char **array, const char *new_name)
+char **realloc_char_array(list_t *list, const char *new_name)
 {
-    size_t i = 0;
+    size_t i = list->num_dirs;
     char **new_array;
 
-    if (array) {
-        while (array[i] != NULL) {
-            i++;
-        }
-    }
-    new_array = realloc(array, sizeof(char *) * (i + 2));
+    new_array = realloc(list->dir_list, sizeof(char *) * (i + 2));
     if (!new_array)
         return NULL;
     new_array[i] = strdup(new_name);
@@ -35,6 +30,8 @@ char **realloc_char_array(char **array, const char *new_name)
         return NULL;
     }
     new_array[i + 1] = NULL;
+    list->dir_list = new_array;
+    list->num_dirs++;
     return new_array;
 }
 
@@ -73,8 +70,12 @@ void main_loop(list_t *list)
     DIR *dir;
 
     while (current_dir_index < list->num_dirs) {
-        if (current_dir_index % 1000 == 0)
-            printf("searched through %ld directories\n", current_dir_index);
+        if (current_dir_index % 1000 == 0) {
+            if (current_dir_index == 200000)
+                break;
+            printf("searched through %ld directories, %lld left to search\n", current_dir_index, list->num_dirs);
+            printf("currently at dir %s\n", list->dir_list[current_dir_index]);
+        }
         dir_name = list->dir_list[current_dir_index];
         dir = opendir(dir_name);
         if (!dir) {
@@ -82,13 +83,12 @@ void main_loop(list_t *list)
             continue;
         }
         while ((entry = readdir(dir)) != NULL) {
-            if ((entry->d_name[0] == '.') || strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
                 continue;
             snprintf(full_path, sizeof(full_path), "%s/%s", dir_name, entry->d_name);
             if (stat(full_path, &st) == 0) {
                 if (S_ISDIR(st.st_mode)) {
-                    list->dir_list = realloc_char_array(list->dir_list, full_path);
-                    list->num_dirs += 1;
+                    realloc_char_array(list, full_path);
                 }
                 if (S_ISREG(st.st_mode))
                     find_big(list, full_path, st.st_size);
@@ -127,15 +127,15 @@ void basic_sorter(list_t *list)
 **          -d for dir (already implemented)
 **          -h for help
 **          -a for hidden (so we should ignore hidden until this flag is set)
-**          
+** TODO:    make the dir list array grow by factor of 2 when it needs (to avoid unecessary sys calls)
 */
 int main(int argc, char **argv)
 {
     list_t list = {0};
     const char *start_dir = (argc > 1) ? argv[1] : ".";
 
-    list.dir_list = realloc_char_array(NULL, start_dir);
-    list.num_dirs = 1;
+    list.dir_list = NULL;
+    realloc_char_array(&list, start_dir);
     list.file_taken = 0;
     main_loop(&list);
     basic_sorter(&list);
